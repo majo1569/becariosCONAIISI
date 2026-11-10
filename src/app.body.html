@@ -1,0 +1,104 @@
+<div class="wrap">
+<header class="hero">
+{{CABECERA}}
+  <div class="hello">
+    <h2>¡Sumate cuando estés disponible!</h2>
+    <p>No es obligatorio estar siempre, pero sí necesitamos cubrir algunas situaciones: <strong>una persona en cada sesión, alguien en la acreditación, en la puerta de cada taller</strong>, y así. Podés cumplir más de uno de los roles que se describen abajo.</p>
+    <p>Elegí tu nombre, anotate en las tareas que puedas y marcá tu disponibilidad en la tabla.</p>
+    <p class="gracias">¡Muchas gracias por tu colaboración!</p>
+  </div>
+  <div class="stats" id="stats"></div>
+</header>
+
+<div class="topbar">
+  <div class="tabs" role="tablist" aria-label="Cambiar vista" id="tabs"></div>
+  <div class="whorow">
+    <label for="who">¿Quién sos?
+      <select id="who"><option value="">Cargando lista…</option></select>
+    </label>
+    <button class="btn ghost small" id="addme" type="button">No estoy en la lista</button>
+  </div>
+  <div id="newbox" class="whorow" hidden>
+    <label for="newname">Apellido y nombre
+      <input type="text" id="newname" placeholder="Ej.: Pérez, Lucía" autocomplete="name">
+    </label>
+    <button class="btn small" id="newok" type="button">Agregarme</button>
+  </div>
+  <div id="dbmsg" class="banner" hidden></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<!-- ========== TAREAS ========== -->
+<section data-v="tareas" aria-labelledby="t-res">
+  <div class="sh"><span class="ic"><svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg></span><div><h2 id="t-res">Tareas que hay que cubrir</h2><span class="u"></span></div></div>
+  <p class="sub">Resumen por rol: cuántas personas necesitamos como mínimo y cuántas hay anotadas. Lo marcado como imprescindible hay que cubrirlo sí o sí.</p>
+  <div class="card scroll"><table class="sumtbl" id="sumtbl"></table></div>
+  <details class="roles"><summary>Qué hace cada rol</summary><div class="rolegrid" id="roles"></div></details>
+  <div><button class="btn ghost small" type="button" id="ntopen">＋ Cargar una tarea nueva</button></div>
+  <form class="newtask" id="ntform" hidden novalidate>
+    <label for="nt-titulo">Qué hay que hacer
+      <input type="text" id="nt-titulo" maxlength="120" placeholder="Ej.: Llevar sillas al hall">
+    </label>
+    <div class="ntgrid">
+      <label for="nt-d">Día<select id="nt-d"></select></label>
+      <label for="nt-inicio">Desde<input type="time" id="nt-inicio" value="09:00"></label>
+      <label for="nt-fin">Hasta<input type="time" id="nt-fin" value="10:00"></label>
+      <label for="nt-min">Mínimo de colaboradores<input type="number" id="nt-min" min="1" max="30" value="1"></label>
+      <label for="nt-cupo">Máximo (opcional)<input type="number" id="nt-cupo" min="1" max="40" placeholder="igual al mínimo"></label>
+      <label for="nt-lugar">Lugar<input type="text" id="nt-lugar" maxlength="80" placeholder="A confirmar"></label>
+    </div>
+    <label for="nt-detalle">Detalle (opcional)
+      <input type="text" id="nt-detalle" maxlength="200" placeholder="Ej.: pedir las llaves en bedelía">
+    </label>
+    <label class="chkrow"><input type="checkbox" id="nt-crit" checked> Es imprescindible cubrirla</label>
+    <div class="savebar"><button class="btn" type="submit" id="ntsave">Agregar tarea</button><button class="btn ghost small" type="button" id="ntcancel">Cancelar</button><span class="toast" id="ntstatus" role="status"></span></div>
+  </form>
+</section>
+
+<section data-v="tareas" aria-labelledby="t-mine" id="mine-sec" hidden>
+  <div class="sh"><span class="ic"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg></span><div><h2 id="t-mine">Mis tareas</h2><span class="u"></span></div></div>
+  <div class="mine-list" id="mine"></div>
+</section>
+
+<section data-v="tareas" aria-labelledby="t-tasks">
+  <div class="sh"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span><div><h2 id="t-tasks">Anotate en tareas</h2><span class="u"></span></div></div>
+  <p class="sub">Los horarios ya incluyen la preparación: el tech assistant llega 30 minutos antes. Las tareas con la barra roja todavía no llegan al mínimo de personas.</p>
+  <div class="filters" id="filters"></div>
+  <div class="daylist" id="days"><p class="empty">Cargando tareas…</p></div>
+</section>
+
+<!-- ========== TABLA ========== -->
+<section data-v="tabla" aria-labelledby="t-tabla">
+  <div class="sh"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14.2c2.8.3 5 2.6 5 5.8"/></svg></span><div><h2 id="t-tabla">Tabla de colaboradores</h2><span class="u"></span></div></div>
+  <div class="legendbox">
+    <p><strong>Buscá tu fila y tocá cada casillero para marcar tu disponibilidad.</strong> Cada toque cambia la marca y se guarda solo. En la última columna podés anotarte en una tarea o sacarte.</p>
+    <div class="legend" aria-label="Significado de las marcas">
+      <span><i class="m y"></i>Puedo</span>
+      <span><i class="m p"></i>Puedo una parte</span>
+      <span><i class="m q"></i>Posiblemente</span>
+      <span><i class="m n"></i>No puedo</span>
+      <span><i class="m u">?</i>Sin marcar</span>
+    </div>
+  </div>
+  <div class="tblbar">
+    <label for="buscar">Buscar nombre<input type="text" id="buscar" placeholder="Escribí tu apellido"></label>
+    <span class="sub" id="tblcount"></span>
+  </div>
+  <div class="card tablebox"><table class="grid" id="grid"><tbody><tr><td class="empty">Cargando…</td></tr></tbody></table></div>
+</section>
+
+<!-- ========== COBERTURA ========== -->
+<section data-v="cobertura" aria-labelledby="t-cov">
+  <div class="sh"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></span><div><h2 id="t-cov">¿Llegamos a los mínimos?</h2><span class="u"></span></div></div>
+  <p class="sub">Análisis en vivo de lo que ya está cubierto y lo que falta. Se actualiza solo cuando alguien se anota.</p>
+  <div class="cov-head" id="covkpi"></div>
+  <div class="checks" id="covchecks"></div>
+  <div class="two">
+    <div class="card scroll"><table class="sumtbl" id="covfr"></table></div>
+    <div class="card scroll"><table class="sumtbl" id="covpeople"></table></div>
+  </div>
+</section>
+
+{{PIE}}
+</div>
+{{ONDA}}
