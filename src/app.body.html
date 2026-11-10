@@ -17,6 +17,7 @@
       <select id="who"><option value="">Cargando lista…</option></select>
     </label>
     <button class="btn ghost small" id="addme" type="button">No estoy en la lista</button>
+    <button class="btn small" id="addtask" type="button">＋ Agregar actividad</button>
   </div>
   <div id="newbox" class="whorow" hidden>
     <label for="newname">Apellido y nombre
@@ -34,24 +35,26 @@
   <p class="sub">Resumen por rol: cuántas personas necesitamos como mínimo y cuántas hay anotadas. Lo marcado como imprescindible hay que cubrirlo sí o sí.</p>
   <div class="card scroll"><table class="sumtbl" id="sumtbl"></table></div>
   <details class="roles"><summary>Qué hace cada rol</summary><div class="rolegrid" id="roles"></div></details>
-  <div><button class="btn ghost small" type="button" id="ntopen">＋ Cargar una tarea nueva</button></div>
+  <div><button class="btn ghost small" type="button" id="ntopen">＋ Agregar una actividad o tarea</button></div>
   <form class="newtask" id="ntform" hidden novalidate>
-    <label for="nt-titulo">Qué hay que hacer
+    <h3>Nueva actividad o tarea</h3>
+    <p class="sub" style="margin:0">Cargá qué hay que hacer, el día y el horario, cuántas personas hacen falta y si es imprescindible que haya alguien. Aparece enseguida para que la gente se anote.</p>
+    <label for="nt-titulo">Actividad o tarea
       <input type="text" id="nt-titulo" maxlength="120" placeholder="Ej.: Llevar sillas al hall">
     </label>
     <div class="ntgrid">
       <label for="nt-d">Día<select id="nt-d"></select></label>
       <label for="nt-inicio">Desde<input type="time" id="nt-inicio" value="09:00"></label>
       <label for="nt-fin">Hasta<input type="time" id="nt-fin" value="10:00"></label>
-      <label for="nt-min">Mínimo de colaboradores<input type="number" id="nt-min" min="1" max="30" value="1"></label>
-      <label for="nt-cupo">Máximo (opcional)<input type="number" id="nt-cupo" min="1" max="40" placeholder="igual al mínimo"></label>
+      <label for="nt-min">Personas necesarias (mínimo)<input type="number" id="nt-min" min="1" max="30" value="1"></label>
+      <label for="nt-cupo">Máximo que se pueden anotar (opcional)<input type="number" id="nt-cupo" min="1" max="40" placeholder="igual al mínimo"></label>
       <label for="nt-lugar">Lugar<input type="text" id="nt-lugar" maxlength="80" placeholder="A confirmar"></label>
     </div>
     <label for="nt-detalle">Detalle (opcional)
       <input type="text" id="nt-detalle" maxlength="200" placeholder="Ej.: pedir las llaves en bedelía">
     </label>
-    <label class="chkrow"><input type="checkbox" id="nt-crit" checked> Es imprescindible cubrirla</label>
-    <div class="savebar"><button class="btn" type="submit" id="ntsave">Agregar tarea</button><button class="btn ghost small" type="button" id="ntcancel">Cancelar</button><span class="toast" id="ntstatus" role="status"></span></div>
+    <label class="chkrow"><input type="checkbox" id="nt-crit" checked> Es imprescindible que haya alguien (si queda sin cubrir, aparece en rojo en «¿Llegamos a los mínimos?»)</label>
+    <div class="savebar"><button class="btn" type="submit" id="ntsave">Agregar actividad</button><button class="btn ghost small" type="button" id="ntcancel">Cancelar</button><span class="toast" id="ntstatus" role="status"></span></div>
   </form>
 </section>
 

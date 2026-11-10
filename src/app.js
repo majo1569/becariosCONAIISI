@@ -83,13 +83,17 @@ function renderResumen(){
 function setupNuevaTarea(){
   $("nt-d").innerHTML=D.dias.map(d=>`<option value="${d.d}">${esc(d.nombre)}</option>`).join("");
   $("ntopen").onclick=()=>{$("ntform").hidden=!$("ntform").hidden;if(!$("ntform").hidden)$("nt-titulo").focus()};
+  $("addtask").onclick=()=>{
+    if(vista!=="todo"&&vista!=="tareas"){vista="tareas";try{localStorage.setItem("conaiisi-vista",vista)}catch(_){};aplicarVista();renderTabs()}
+    $("ntform").hidden=false;$("ntform").scrollIntoView({behavior:"smooth",block:"start"});setTimeout(()=>$("nt-titulo").focus({preventScroll:true}),350);
+  };
   $("ntcancel").onclick=()=>{$("ntform").hidden=true;toast("ntstatus","","")};
   $("ntform").onsubmit=async e=>{
     e.preventDefault();
     const min=parseInt($("nt-min").value,10),cupoTxt=$("nt-cupo").value.trim();
     const x={titulo:$("nt-titulo").value.trim(),d:$("nt-d").value,inicio:$("nt-inicio").value,fin:$("nt-fin").value,min,cupo:cupoTxt?parseInt(cupoTxt,10):min,lugar:$("nt-lugar").value.trim(),detalle:$("nt-detalle").value.trim(),critico:$("nt-crit").checked};
     $("ntsave").disabled=true;toast("ntstatus","Guardando…","");
-    try{await store.crearTarea(x);toast("ntstatus","","");toast("toast",`Tarea agregada: ${x.titulo} ✓`,"ok");
+    try{await store.crearTarea(x);toast("ntstatus","","");toast("toast",`Actividad agregada: ${x.titulo} ✓ Ya se pueden anotar.`,"ok");
       $("ntform").reset();$("nt-inicio").value="09:00";$("nt-fin").value="10:00";$("nt-min").value="1";$("nt-crit").checked=true;$("ntform").hidden=true;
     }catch(err){toast("ntstatus",err.message,"err")}
     $("ntsave").disabled=false;

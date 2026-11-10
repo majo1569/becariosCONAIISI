@@ -155,3 +155,6 @@ td.tk select{font:inherit;font-size:13px;padding:4px 6px;border:1px dashed var(-
 .two .sumtbl{min-width:0}
 .two .sumtbl th,.two .sumtbl td{padding:8px 10px}
 #covpeople tfoot td{text-transform:none;font-family:var(--body);font-weight:500;font-size:13px;line-height:1.5}
+#ntform{scroll-margin-top:190px}
+.newtask>label.chkrow{display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:14.5px;font-weight:600}
+.newtask>label.chkrow input{width:18px;height:18px;flex:none;accent-color:var(--red)}
