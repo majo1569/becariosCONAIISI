@@ -23,6 +23,7 @@ export function crearFakeUpstash({ token = "tok" } = {}) {
         if (m.has(a[1])) return 0; m.set(a[1], a[2]); return 1;
       }
       case "HGET": { const m = h.get(a[0]); return m && m.has(a[1]) ? m.get(a[1]) : null; }
+      case "HMGET": { const m = h.get(a[0]); return a.slice(1).map((f) => (m && m.has(f) ? m.get(f) : null)); }
       case "HLEN": { const m = h.get(a[0]); return m ? m.size : 0; }
       case "HEXISTS": { const m = h.get(a[0]); return m && m.has(a[1]) ? 1 : 0; }
       case "HDEL": { const m = h.get(a[0]); let n = 0; if (m) a.slice(1).forEach((f) => { if (m.delete(f)) n++; }); return n; }

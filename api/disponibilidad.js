@@ -2,7 +2,9 @@
 // GET  /api/disponibilidad?historial=1    → { historial: [...] } (más nuevo primero)
 // GET  /api/disponibilidad?formato=csv    → planilla de disponibilidad
 // GET  /api/disponibilidad?formato=tareas → planilla de tareas con quiénes están anotados
-// POST /api/disponibilidad                → body { id?, nombre, av, nota }  (crea o actualiza una persona)
+// POST /api/disponibilidad                → body { id, cambios: { franja: estado } , nota? }  cambia solo esas celdas
+//                                            body { nombre }  agrega una persona nueva
+//                                            (también acepta { id, nombre, av, nota } de versiones anteriores: cambia solo las franjas enviadas)
 import { K, cliente, inicializar, leerPersonas, leerInscripciones, leerTareas, leerBody, parse, sinBase } from "../lib/db.js";
 import { TAREAS, TIPOS, DIAS, FRANJAS } from "../lib/tareas.js";
 import seed from "../lib/seed.js";
@@ -64,29 +66,44 @@ export default async function handler(req, res) {
     if (req.method === "POST") {
       if (!redis) return sinBase(res);
       const body = leerBody(req);
-      const nombre = String(body.nombre || "").trim().slice(0, 80);
-      if (nombre.length < 3) return res.status(400).json({ error: "Escribí tu apellido y nombre." });
-      const id = body.id ? slug(String(body.id)) : slug(nombre);
-      if (!id) return res.status(400).json({ error: "Nombre no válido." });
       await inicializar(redis);
-      const prev = await redis.hget(K.personas, id);
-      const antes = prev ? parse(prev) : null;
-      if (!antes) {
-        const total = await redis.hlen(K.personas);
-        if (total >= 150) return res.status(400).json({ error: "La lista está completa." });
+      const cuando = new Date().toISOString();
+      const id = body.id ? slug(String(body.id)) : slug(String(body.nombre || ""));
+      if (!id) return res.status(400).json({ error: "Escribí tu apellido y nombre." });
+      const existe = await redis.hget(K.personas, id);
+
+      // Persona nueva
+      if (!existe) {
+        const nombre = String(body.nombre || "").trim().slice(0, 80);
+        if (nombre.length < 3) return res.status(400).json({ error: "Escribí tu apellido y nombre." });
+        if ((await redis.hlen(K.personas)) >= 150) return res.status(400).json({ error: "La lista está completa." });
+        const persona = { nombre, av: Object.fromEntries(CLAVES.map((k) => [k, "u"])), nota: "", actualizado: cuando };
+        const creada = await redis.hsetnx(K.personas, id, JSON.stringify(persona)); // si dos la crean a la vez, queda una sola
+        if (creada) await redis.lpush(K.historial, JSON.stringify({ cuando, tipo: "alta", id, nombre }));
       }
-      // Conserva marcas de franjas que ya no se muestran; actualiza solo las franjas vigentes.
-      const av = { ...(antes?.av || {}) };
-      for (const k of CLAVES) {
-        const v = body.av && body.av[k];
-        av[k] = ESTADOS.includes(v) ? v : "u";
+
+      // Cambios de celdas: cada celda es un campo propio, así nunca se pisa lo que guardó otro
+      const cambios = body.cambios || body.av || {};
+      const campos = {}, detalle = {};
+      for (const [k, v] of Object.entries(cambios)) {
+        if (!CLAVES.includes(k)) continue;
+        const val = ESTADOS.includes(v) ? v : "u";
+        campos[`${id}|${k}`] = val; detalle[k] = val;
       }
-      const persona = { nombre: antes?.nombre || nombre, av, nota: String(body.nota || "").trim().slice(0, 300), actualizado: new Date().toISOString() };
-      const tx = redis.multi();
-      tx.hset(K.personas, { [id]: JSON.stringify(persona) });
-      tx.lpush(K.historial, JSON.stringify({ cuando: persona.actualizado, tipo: "disponibilidad", id, nombre: persona.nombre, av, nota: persona.nota, antes: antes ? antes.av : null }));
-      await tx.exec();
-      return res.status(200).json({ id, persona });
+      if (typeof body.nota === "string") campos[`${id}|_nota`] = body.nota.trim().slice(0, 300);
+      if (Object.keys(campos).length) {
+        const antes = await redis.hmget(K.marcas, ...Object.keys(campos));
+        const base = existe ? parse(existe) : null;
+        const previo = {};
+        Object.keys(detalle).forEach((k, i) => { previo[k] = (Array.isArray(antes) ? antes[i] : antes?.[`${id}|${k}`]) ?? base?.av?.[k] ?? "u"; });
+        campos[`${id}|_cuando`] = cuando;
+        const tx = redis.multi();
+        tx.hset(K.marcas, campos);
+        tx.lpush(K.historial, JSON.stringify({ cuando, tipo: "disponibilidad", id, cambios: detalle, antes: previo, ...(typeof body.nota === "string" ? { nota: campos[`${id}|_nota`] } : {}) }));
+        await tx.exec();
+      }
+      const personas = await leerPersonas(redis);
+      return res.status(200).json({ id, persona: personas[id] });
     }
 
     res.setHeader("Allow", "GET, POST");

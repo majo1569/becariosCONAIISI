@@ -35,9 +35,10 @@ const store=(()=>{
         const m={};snap.docs.forEach(x=>{const v=x.data();if(v&&v.titulo&&!v.borrada)m[x.id]=v});S.extra=m;ok.e=true;emitir();
       },fallo);
     },
-    async guardarDisponibilidad(id,nombre,av,nota){necesitaDb();
-      try{await db.collection("disponibilidad").doc(id).update({av,nota,actualizado:new Date().toISOString()});log({tipo:"disponibilidad",id,av,nota})}catch(e){throw err(e)}},
-    async agregarPersona(nombre,claves){necesitaDb();
+    // update() mezcla objetos anidados: solo se toca av.<franja>, nunca las otras celdas.
+    async guardarMarca(id,k,v){necesitaDb();
+      try{await db.collection("disponibilidad").doc(id).update({av:{[k]:v},actualizado:new Date().toISOString()});log({tipo:"disponibilidad",id,cambios:{[k]:v}})}catch(e){throw err(e)}},
+    async agregarPersona(nombre){necesitaDb();const claves=CFG.franjas.map(f=>f.k);
       const id=nombre.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,60);
       if(!id)throw new Error("Nombre no válido.");
       if(S.personas[id])return id;

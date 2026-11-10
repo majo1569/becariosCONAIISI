@@ -18,8 +18,8 @@ const store=(()=>{
     async start(d,s){onData=d;onStatus=s;await cargar();
       setInterval(()=>{if(!document.hidden&&!ocupado)cargar()},30000);
       document.addEventListener("visibilitychange",()=>{if(!document.hidden&&!ocupado)cargar()});},
-    guardarDisponibilidad:(id,nombre,av,nota)=>mutar("/api/disponibilidad",{id,nombre,av,nota}),
-    async agregarPersona(nombre,claves){const av={};claves.forEach(k=>av[k]="u");const r=await mutar("/api/disponibilidad",{nombre,av,nota:""});return r.id},
+    guardarMarca:(id,k,v)=>mutar("/api/disponibilidad",{id,cambios:{[k]:v}}),
+    async agregarPersona(nombre){const r=await mutar("/api/disponibilidad",{nombre});return r.id},
     anotar:(tarea,persona)=>mutar("/api/inscripcion",{tarea,persona,accion:"anotar"}),
     baja:(tarea,persona)=>mutar("/api/inscripcion",{tarea,persona,accion:"baja"}),
     crearTarea:x=>mutar("/api/tarea",{accion:"crear",...x}),

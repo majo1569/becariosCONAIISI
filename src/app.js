@@ -173,6 +173,7 @@ async function accion(tipo,idTarea,persona,btn){
 }
 
 // ---------- tabla de colaboradores ----------
+// Cada toque guarda SOLO esa celda (persona + franja). Así, aunque muchos marquen a la vez, nadie pisa lo de otro.
 const guardando=new Set();
 const colas={};
 function renderGrid(){
@@ -204,7 +205,7 @@ function ciclar(id,k){
   const f=D.franjas.find(x=>x.k===k);
   // Una escritura a la vez por persona: se encolan
   colas[id]=(colas[id]||Promise.resolve()).then(async()=>{
-    try{await store.guardarDisponibilidad(id,p.nombre,{...D.personas[id].av},D.personas[id].nota||"");
+    try{await store.guardarMarca(id,k,nuevo);
       toast("toast",`Guardado: ${p.nombre} · ${diaNombre(f.d)} ${f.nombre}: ${LABEL[nuevo]} ✓`,"ok");
     }catch(e){toast("toast",e.message,"err")}
     guardando.delete(id+k);renderGrid();renderCobertura();
@@ -255,7 +256,7 @@ $("addme").onclick=()=>{$("newbox").hidden=!$("newbox").hidden;if(!$("newbox").h
 $("newok").onclick=async()=>{
   const n=$("newname").value.trim();
   if(n.length<3){toast("toast","Escribí tu apellido y nombre.","err");return}
-  try{const id=await store.agregarPersona(n,D.franjas.map(f=>f.k));
+  try{const id=await store.agregarPersona(n);
     current=id;try{localStorage.setItem("conaiisi-yo",id)}catch(_){}
     $("newbox").hidden=true;$("newname").value="";renderPicker();renderAll();
     toast("toast","Listo, ya estás en la lista. Ahora anotate en tareas y marcá tu disponibilidad en la tabla.","ok");

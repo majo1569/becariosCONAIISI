@@ -73,13 +73,67 @@ test("guardados simultáneos de distintas personas no se pisan", async () => {
 
 test("cada cambio de disponibilidad queda en el historial con lo que había antes", async () => {
   await get();
-  await post({ id: "sanz-victoria", nombre: "Sanz, Victoria", av: { "l-t": "y" } });
-  await post({ id: "sanz-victoria", nombre: "Sanz, Victoria", av: { "l-t": "n" } });
+  await post({ id: "sanz-victoria", cambios: { "l-t": "y" } });
+  await post({ id: "sanz-victoria", cambios: { "l-t": "n" } });
   const { body } = await get("?historial=1");
   assert.equal(body.historial.length, 2);
-  assert.equal(body.historial[0].av["l-t"], "n");
+  assert.equal(body.historial[0].cambios["l-t"], "n");
   assert.equal(body.historial[0].antes["l-t"], "y");
+  assert.equal(body.historial[1].antes["l-t"], "u");
   assert.ok(body.historial[0].cuando);
+});
+
+// ---------- Simultaneidad: lo más importante ----------
+
+test("la misma persona marca varias celdas a la vez (desde distintos celulares): no se pierde ninguna", async () => {
+  await get();
+  const valores = { "l-t": "y", "w-m": "p", "w-n": "q", "j-m": "n", "j-t": "y", "j-n": "p", "v-m": "q" };
+  const res = await Promise.all(Object.entries(valores).map(([k, v]) => post({ id: "cettour-ivo", cambios: { [k]: v } })));
+  res.forEach((r) => assert.equal(r.code, 200));
+  const { body } = await get();
+  for (const [k, v] of Object.entries(valores)) assert.equal(body.personas["cettour-ivo"].av[k], v, k);
+});
+
+test("todos marcan todo al mismo tiempo: cada celda de cada persona queda guardada", async () => {
+  await get();
+  const est = ["y", "p", "q", "n"];
+  const claves = (await get()).body.franjas.map((f) => f.k);
+  const esperado = {};
+  const pedidos = [];
+  ids.forEach((id, i) => claves.forEach((k, j) => {
+    const v = est[(i + j) % 4];
+    (esperado[id] ||= {})[k] = v;
+    pedidos.push(post({ id, cambios: { [k]: v } }));
+  }));
+  const res = await Promise.all(pedidos);
+  assert.equal(res.filter((r) => r.code !== 200).length, 0);
+  const { body } = await get();
+  for (const id of ids) for (const k of claves) assert.equal(body.personas[id].av[k], esperado[id][k], `${id} ${k}`);
+  // y también quedó en el historial cada uno de esos cambios
+  const h = await get("?historial=1&limite=5000");
+  assert.equal(h.body.historial.filter((x) => x.tipo === "disponibilidad").length, pedidos.length);
+});
+
+test("dos personas se agregan con el mismo nombre a la vez: queda una sola", async () => {
+  await get();
+  const r = await Promise.all([post({ nombre: "Pérez, Lucía" }), post({ nombre: "Pérez, Lucía" }), post({ nombre: "Perez, Lucia" })]);
+  r.forEach((x) => assert.equal(x.code, 200));
+  const { body } = await get();
+  assert.equal(Object.keys(body.personas).filter((k) => k === "perez-lucia").length, 1);
+  assert.equal(Object.keys(body.personas).length, ids.length + 1);
+});
+
+test("marcar disponibilidad y anotarse en tareas al mismo tiempo no se mezclan", async () => {
+  await get();
+  const varios = ids.slice(0, 15);
+  await Promise.all(varios.flatMap((id, i) => [
+    post({ id, cambios: { "j-m": "y" } }),
+    anotar(["tour-jue-1", "tour-jue-2", "bolsas-lun"][i % 3], id),
+  ]));
+  const { body } = await get();
+  varios.forEach((id) => assert.equal(body.personas[id].av["j-m"], "y"));
+  const total = ["tour-jue-1", "tour-jue-2", "bolsas-lun"].reduce((s, t) => s + (body.inscripciones[t] || []).length, 0);
+  assert.equal(total, 2 + 2 + 5); // tours con cupo 2 cada uno; bolsas: los 5 que lo pidieron (cupo 8)
 });
 
 test("alguien nuevo puede sumarse y queda guardado", async () => {
