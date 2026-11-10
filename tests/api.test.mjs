@@ -309,6 +309,16 @@ test("sin base conectada no guarda y lo dice", async () => {
   assert.equal((await get()).body.persistente, false);
 });
 
+test("encuentra la base aunque Vercel use otro prefijo en las variables", async () => {
+  const url = process.env.KV_REST_API_URL;
+  delete process.env.KV_REST_API_URL; delete process.env.KV_REST_API_TOKEN;
+  process.env.STORAGE_REST_API_URL = url; process.env.STORAGE_REST_API_TOKEN = "tok";
+  try {
+    assert.equal((await get()).body.persistente, true);
+    assert.equal((await post({ id: "castro-mauricio", cambios: { "j-m": "n" } })).code, 200);
+  } finally { delete process.env.STORAGE_REST_API_URL; delete process.env.STORAGE_REST_API_TOKEN; }
+});
+
 test("si la base falla, responde error (no hace como que guardó)", async () => {
   process.env.KV_REST_API_TOKEN = "token-incorrecto";
   assert.equal((await post({ id: "castro-mauricio", nombre: "Castro, Mauricio", av: {} })).code, 500);

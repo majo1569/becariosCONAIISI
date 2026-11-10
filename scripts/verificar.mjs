@@ -12,7 +12,7 @@ try {
   const r = await fetch(base + "/api/disponibilidad", { cache: "no-store" });
   check(r.ok, `La API responde (${r.status})`);
   const j = await r.json();
-  check(j.persistente === true, "La base de datos está conectada" + (j.persistente ? "" : " → falta conectar Upstash en Storage y hacer Redeploy"));
+  check(j.persistente === true, "La base de datos está conectada" + (j.persistente ? "" : " → falta conectar Upstash for Redis en Storage y hacer Redeploy"));
   const n = Object.keys(j.personas || {}).length;
   check(n > 0, `Hay ${n} personas en la lista`);
   const tareas = j.tareas || [];
